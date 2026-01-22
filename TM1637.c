@@ -15,8 +15,10 @@ const uint8_t TM_Number_Arr[ 10 ] = { 0x3F, 0x06, 0x5B, 0x4F, 0x66, 0x6D, 0x7D, 
 /* Button IC Array */
 const uint8_t TM_Button_ID_Arr[ 16 ] = { TM_KEY_S1_ID, TM_KEY_S2_ID, TM_KEY_S3_ID, TM_KEY_S4_ID,
 										 TM_KEY_S5_ID, TM_KEY_S6_ID, TM_KEY_S7_ID, TM_KEY_S8_ID,
-										 TM_KEY_S9_ID, TM_KEY_S1_ID, TM_KEY_S1_ID, TM_KEY_S1_ID,
-										 TM_KEY_S1_ID, TM_KEY_S1_ID, TM_KEY_S1_ID, TM_KEY_S1_ID, };
+										 TM_KEY_S9_ID, TM_KEY_S10_ID, TM_KEY_S11_ID, TM_KEY_S12_ID,
+										 TM_KEY_S13_ID, TM_KEY_S14_ID, TM_KEY_S15_ID, TM_KEY_S16_ID };
+
+const uint8_t TM_ASCII[30];
 
 // Delay for TM1637 Processes
 void TM1637_Delay( uint32_t Delay ){
@@ -25,51 +27,77 @@ void TM1637_Delay( uint32_t Delay ){
 	while( Delay-- ) {
 		LV_Counter = 10;
 		while( LV_Counter-- ) {
-			__asm__("NOP");
+			__asm__( "NOP" );
 		}
 	}
+}
+
+/* *********************************************************************************
+ * ******************************************************************************* */
+// Modefy this set of Code for interoperatibility with other Hardwair
+void TM1637_Data_PIN( uint8_t Value ) {
+
+	P05 = Value;
+
+}
+
+uint8_t TM1637_Data_PIN_Read( void ) {
+
+	uint8_t LV_Return = P05;
+
+	return LV_Return;
+}
+
+void TM1637_CLK_PIN( uint8_t Value ) {
+	P06 = Value;
+}
+
+/* ***********************************************************************************/
+
+void TM1637_Data_PIN_Input_Mode( void ) {
+	TM1637_Data_PIN(1);
 }
 
 /* Start Condition */
 void TM1637_Start( void ) {
 
-	TM1637_CLK_PIN = 1;		// Clock HIGH
-	TM1637_DATA_PIN = 1;	// DATA HIGH
+	TM1637_CLK_PIN(1);		// Clock HIGH
+	TM1637_Data_PIN(1);	// DATA HIGH
 	TM1637_Delay( 2 );
 
-	TM1637_DATA_PIN = 0;	// Clock LOW
+	TM1637_Data_PIN(0);	// Clock LOW
 	TM1637_Delay( 2 );
-	TM1637_CLK_PIN = 0;		// Data LOW
+	TM1637_CLK_PIN(0);		// Data LOW
 }
 
 /* Stop Condition */
 void TM1637_Stop( void ) {
 
-	TM1637_CLK_PIN = 0;		// Clock LOW
+	TM1637_CLK_PIN(0);		// Clock LOW
 	TM1637_Delay( 2 );
-	TM1637_DATA_PIN = 0;	// Data LOW
+	TM1637_Data_PIN(0);	// Data LOW
 	TM1637_Delay( 2 );
 
-	TM1637_CLK_PIN = 1;		// Clock HIGH
+	TM1637_CLK_PIN(1);		// Clock HIGH
 	TM1637_Delay( 2 );
-	TM1637_DATA_PIN = 1;	// Data HIGH
+	TM1637_Data_PIN(1);	// Data HIGH
 
 	TM1637_Delay( 5 );
 }
 
 /* Function to ACK */
 void TM1637_ACK_Detect( void ) {
-	TM1637_DATA_InPut_Mode;		// Set Data pin as Input Mode
+	TM1637_Data_PIN_Input_Mode();		// Set Data pin as Input Mode
 
-	TM1637_CLK_PIN = 0;		// Clock Pin LOW
+	TM1637_CLK_PIN(0);		// Clock Pin LOW
 	TM1637_Delay( 5 );
 
-	while( TM1637_DATA_PIN != 0 ) {}		// Waite for Data pin to Pull LOW
+	while( TM1637_Data_PIN_Read() != 0 ) {}		// Waite for Data pin to Pull LOW
 
 	// One Clock Signal
-	TM1637_CLK_PIN = 1;		// Clock HIGH
+	TM1637_CLK_PIN(1);		// Clock HIGH
 	TM1637_Delay( 2 );
-	TM1637_CLK_PIN = 0;		// Clock LOW
+	TM1637_CLK_PIN(0);		// Clock LOW
 
 }
 
@@ -84,22 +112,17 @@ void TM1637_Send_Data( uint8_t Data ) {
 	// Sending 8-bit Data
 	for(LV_Counter = 0; LV_Counter < 8; LV_Counter++) {
 
-		// Data OutPut
-		if( ( LV_Data & 0x1 ) == 1 ) {
-			TM1637_DATA_PIN = 1;	// Set HIGH
-		}
-		else {
-			TM1637_DATA_PIN = 0;	// Set LOW
-		}
+
+		TM1637_Data_PIN(LV_Data & 0x1);	// Send Bit
 
 		LV_Data >>= 1;		// Left Shift by 1
 		//-----------------------------------------
 
 		TM1637_Delay( 1 );
-		TM1637_CLK_PIN = 1;		// Clock HIGH
+		TM1637_CLK_PIN(1);		// Clock HIGH
 
 		TM1637_Delay( 2 );
-		TM1637_CLK_PIN = 0;		// Clock LOW
+		TM1637_CLK_PIN(0);		// Clock LOW
 	}
 }
 
@@ -298,23 +321,23 @@ uint8_t TM1637_Get_Button_ID( uint8_t* Return_Button_ID_ptr ) {
 	TM1637_Send_Data( 0x42 );			// Key Address	send
 	TM1637_ACK_Detect();
 
-	TM1637_DATA_InPut_Mode;
+	TM1637_Data_PIN_Input_Mode();
 
 	TM1637_Delay( 2 );
 
 	// reading 8 bit Data
 	for(i = 0; i < 8; i++) {
 
-		TM1637_CLK_PIN = 1;		// Clock HIGH
+		TM1637_CLK_PIN(1);		// Clock HIGH
 		TM1637_Delay( 10 );
 
 		LV_Key_ID <<= 1;
-		if( TM1637_DATA_PIN ) {
+		if( TM1637_Data_PIN_Read() ) {
 			LV_Key_ID |= 0x01;		// Load bit
 		}
 
 		TM1637_Delay( 10 );
-		TM1637_CLK_PIN = 0;		// Clock LOW
+		TM1637_CLK_PIN(0);		// Clock LOW
 		TM1637_Delay( 10 );
 	}
 
@@ -362,11 +385,13 @@ void TM1637_Init( void ) {
 
 	uint8_t LV_Counter;
 
-	TM1637_CLK_OutPut_Mode;
-	TM1637_DATA_OutPut_Mode;
+	//TM1637_CLK_OutPut_Mode;
+	//TM1637_DATA_OutPut_Mode;
+	P05_OPENDRAIN_MODE;		// Data Pin
+	P06_OPENDRAIN_MODE;		// Clock Oin
 
-	TM1637_CLK_PIN = 1;
-	TM1637_DATA_PIN = 0;
+	TM1637_CLK_PIN(1);
+	TM1637_Data_PIN(0);
 
 
 	//-------------------------------------

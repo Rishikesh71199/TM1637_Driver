@@ -5,20 +5,19 @@
 
 #include "numicro_8051.h"
 
-
 /*************************************************************************
  *
  *  Modification to done by User for Attacting it their code
  *  */
 // Defination of TM1637 IC
-#define TM1637_DATA_PIN					P06					// Pin for Data
-#define TM1637_CLK_PIN					P05					// pin for Clock
+//#define TM1637_DATA_PIN					P05					// Pin for Data
+//#define TM1637_CLK_PIN					P06					// pin for Clock
 
 // pin Initialization Code
-#define TM1637_DATA_OutPut_Mode			P06_OPENDRAIN_MODE
-#define TM1637_DATA_InPut_Mode			TM1637_DATA_PIN = 1
+//#define TM1637_DATA_OutPut_Mode			P05_OPENDRAIN_MODE
+//#define TM1637_DATA_InPut_Mode			TM1637_DATA_PIN = 1
 
-#define TM1637_CLK_OutPut_Mode			P05_OPENDRAIN_MODE
+//#define TM1637_CLK_OutPut_Mode			P06_OPENDRAIN_MODE
 
 //************************************************************************
 //----------------------------------------------------------------
@@ -77,6 +76,12 @@
 
 
 void TM1637_Delay ( uint32_t Delay );
+
+void TM1637_Data_PIN( uint8_t Value );
+uint8_t TM1637_Data_PIN_Read(void);
+void TM1637_CLK_PIN( uint8_t Value );
+
+void TM1637_Data_PIN_Input_Mode( void );
 
 void TM1637_Start ( void );
 
